@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUTTER 2026-27 | Coil Search & Booking</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --primary:#1a237e;--plight:#3949ab;--pdark:#0d1757;
+  --accent:#ff6f00;--green:#00897b;--red:#e53935;--purple:#7b1fa2;
+  --bg:#eef2ff;--card:#fff;--shadow:0 4px 24px rgba(26,35,126,0.13);--r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#0d1757 0%,#1a237e 50%,#3949ab 100%);
+  color:#fff;padding:16px 28px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 3px 18px rgba(13,23,87,0.4);flex-wrap:wrap;}
+.hdr-icon{font-size:2rem;}
+.hdr-txt h1{font-size:1.4rem;font-weight:800;letter-spacing:1px;}
+.hdr-txt p{font-size:0.78rem;opacity:0.8;margin-top:2px;}
+.hdr-right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.cnt-pill{background:rgba(255,255,255,0.15);border-radius:50px;padding:5px 14px;font-size:0.78rem;font-weight:600;}
+
+/* TABS */
+.tabs{display:flex;background:#12196b;padding:0 24px;overflow-x:auto;}
+.tab-btn{padding:12px 26px;color:rgba(255,255,255,0.6);font-weight:700;font-size:0.88rem;
+  cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;
+  transition:all 0.2s;letter-spacing:0.5px;white-space:nowrap;}
+.tab-btn.active{color:#fff;border-bottom:3px solid var(--accent);}
+.tab-btn:hover{color:#fff;background:rgba(255,255,255,0.07);}
+
+/* MAIN */
+.main{padding:22px 20px;max-width:1150px;margin:0 auto;}
+.sec{display:none;}.sec.active{display:block;}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--r);padding:20px 22px;
+  box-shadow:var(--shadow);margin-bottom:20px;}
+.ctitle{font-size:0.95rem;font-weight:700;color:var(--primary);margin-bottom:14px;
+  display:flex;align-items:center;gap:7px;border-bottom:2px solid var(--bg);padding-bottom:10px;}
+
+/* UPLOAD AREA */
+.upload-zone{border:2.5px dashed #c5cae9;border-radius:var(--r);padding:40px 20px;
+  text-align:center;cursor:pointer;transition:all 0.2s;background:#f8f9ff;position:relative;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--plight);background:#e8eaf6;}
+.upload-zone .u-icon{font-size:3rem;display:block;margin-bottom:12px;}
+.upload-zone h3{color:var(--primary);font-size:1.1rem;margin-bottom:6px;}
+.upload-zone p{color:#888;font-size:0.85rem;}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-btn{display:inline-block;margin-top:14px;padding:10px 26px;background:var(--primary);
+  color:#fff;border-radius:50px;font-weight:700;font-size:0.88rem;cursor:pointer;}
+
+.file-loaded{background:linear-gradient(135deg,#e8f5e9,#fff);border:2px solid #a5d6a7;
+  border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.file-loaded .fi-icon{font-size:2rem;}
+.file-loaded .fi-info h4{color:#2e7d32;font-size:1rem;font-weight:700;}
+.file-loaded .fi-info p{color:#555;font-size:0.82rem;margin-top:3px;}
+.change-btn{margin-left:auto;padding:8px 18px;background:#fff;color:var(--red);
+  border:2px solid var(--red);border-radius:50px;font-weight:700;font-size:0.82rem;cursor:pointer;}
+
+/* SHEET TABS */
+.stabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.sbtn{padding:8px 22px;border-radius:50px;border:2px solid var(--plight);
+  font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--plight);
+  background:#fff;transition:all 0.2s;}
+.sbtn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* SEARCH */
+.srow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.swrap{position:relative;flex:1;min-width:220px;}
+.sinput{width:100%;padding:13px 16px 13px 44px;border-radius:50px;
+  border:2px solid #c5cae9;font-size:0.95rem;transition:border 0.2s;outline:none;}
+.sinput:focus{border-color:var(--plight);box-shadow:0 0 0 3px rgba(57,73,171,0.12);}
+.sicon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--plight);}
+.clrbtn{padding:12px 24px;border-radius:50px;background:var(--accent);color:#fff;
+  border:none;font-weight:700;font-size:0.88rem;cursor:pointer;white-space:nowrap;}
+.clrbtn:hover{background:#e65100;}
+
+/* DROPDOWN */
+.sugg{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;
+  border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.14);z-index:200;
+  max-height:230px;overflow-y:auto;border:1px solid #e8eaf6;}
+.sitem{padding:10px 16px;cursor:pointer;font-size:0.88rem;
+  border-bottom:1px solid #f0f4ff;transition:background 0.15s;
+  display:flex;justify-content:space-between;align-items:center;}
+.sitem:hover{background:#e8eaf6;}
+.sitem:last-child{border-bottom:none;}
+.sbadge{font-size:0.7rem;background:var(--plight);color:#fff;padding:2px 8px;border-radius:20px;}
+
+/* RESULT CARD */
+.rcard{background:linear-gradient(135deg,#e8eaf6 0%,#fff 60%);
+  border-radius:var(--r);padding:20px 22px;border:2px solid #c5cae9;margin-top:4px;}
+.r-coil-no{font-size:1.5rem;font-weight:900;color:var(--primary);}
+.r-tags{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 14px;}
+.rtag{font-size:0.73rem;padding:3px 10px;border-radius:20px;font-weight:700;}
+.rtag-sheet{background:var(--primary);color:#fff;}
+.rtag-shape{background:#e8f5e9;color:#2e7d32;}
+.rtag-gr{background:#fff3e0;color:#e65100;}
+.rtag-mk{background:#f3e5f5;color:var(--purple);}
+
+/* INFO GRID */
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-bottom:16px;}
+.ibox{background:#fff;border-radius:10px;padding:12px 14px;border-left:4px solid var(--plight);
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.ilbl{font-size:0.68rem;color:#777;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.ival{font-size:1.1rem;font-weight:800;color:var(--primary);}
+.isub{font-size:0.72rem;color:#999;margin-top:3px;}
+.rbadge{display:inline-block;background:#e8eaf6;color:var(--primary);border-radius:5px;
+  padding:1px 7px;font-size:0.75rem;font-weight:700;margin-right:3px;margin-top:2px;}
+
+/* CUTS TABLE */
+.cuts-title{font-size:0.88rem;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.cuts-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+.cuts-table th{background:var(--primary);color:#fff;padding:9px 14px;text-align:left;font-size:0.78rem;letter-spacing:0.5px;}
+.cuts-table td{padding:9px 14px;border-bottom:1px solid #eee;}
+.cuts-table tr:last-child td{border-bottom:none;}
+.cuts-table tr:nth-child(even) td{background:#f8f9ff;}
+.cuts-table tr:hover td{background:#e8eaf6;}
+.len-val{font-weight:800;color:var(--primary);font-size:1rem;}
+.pcs-val{font-weight:800;color:var(--accent);font-size:1rem;}
+
+/* EXTRA INFO */
+.einfo{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;
+  margin-top:14px;padding-top:14px;border-top:2px dashed #e8eaf6;}
+.erow{font-size:0.8rem;color:#555;}
+.erow span{font-weight:700;color:var(--primary);}
+
+/* BOOK */
+.note-area{width:100%;margin-top:14px;padding:10px 14px;border-radius:10px;
+  border:1.5px solid #c5cae9;font-size:0.88rem;font-family:inherit;resize:none;outline:none;}
+.note-area:focus{border-color:var(--plight);}
+.book-btn{margin-top:12px;padding:11px 28px;background:var(--green);color:#fff;
+  border:none;border-radius:50px;font-weight:700;font-size:0.88rem;cursor:pointer;}
+.book-btn:hover{background:#00695c;}
+
+/* NO RESULT */
+.nores{text-align:center;padding:50px 20px;color:#bbb;}
+.nores .e{font-size:2.8rem;display:block;margin-bottom:10px;}
+
+/* BOOKINGS */
+.bitem{background:#fff;border-radius:var(--r);padding:18px 20px;
+  box-shadow:var(--shadow);border-left:5px solid var(--green);margin-bottom:14px;
+  display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;}
+.bcoil{font-size:1.2rem;font-weight:900;color:var(--primary);}
+.bsheet{font-size:0.72rem;background:var(--plight);color:#fff;padding:2px 9px;border-radius:20px;margin-left:6px;}
+.bdet{font-size:0.82rem;color:#555;margin-top:4px;}
+.bnote{font-size:0.82rem;font-style:italic;color:#444;margin-top:6px;padding-top:6px;border-top:1px dashed #eee;}
+.bcuts{margin-top:8px;}
+.bcut-chip{display:inline-block;background:#e8eaf6;color:var(--primary);border-radius:6px;
+  padding:3px 10px;font-size:0.78rem;font-weight:700;margin:2px;}
+.bdate{font-size:0.72rem;color:#bbb;margin-top:5px;}
+.delbtn{padding:8px 18px;background:var(--red);color:#fff;border:none;
+  border-radius:50px;font-weight:700;font-size:0.8rem;cursor:pointer;white-space:nowrap;}
+.delbtn:hover{background:#b71c1c;}
+.empty-bk{text-align:center;padding:60px;color:#ccc;}
+.empty-bk .e{font-size:3rem;display:block;margin-bottom:10px;}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--plight);}
+.spinner{width:40px;height:40px;border:4px solid #e8eaf6;border-top:4px solid var(--plight);
+  border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;right:26px;background:#1b5e20;color:#fff;
+  padding:13px 22px;border-radius:10px;font-weight:700;font-size:0.88rem;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:9999;pointer-events:none;
+  transform:translateY(70px);opacity:0;transition:all 0.3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.err{background:var(--red);}
+
+@media(max-width:600px){
+  .main{padding:14px 10px;}.hdr{padding:12px 14px;}
+  .tabs{padding:0 8px;}.tab-btn{padding:10px 14px;font-size:0.8rem;}
+  .igrid{grid-template-columns:repeat(2,1fr);}
+  .einfo{grid-template-columns:1fr;}
+  .hdr-right{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-icon">⚙️</div>
+  <div class="hdr-txt">
+    <h1>CUTTER 2026-27</h1>
+    <p>Coil Search | Range Finder | Booking System</p>
+  </div>
+  <div class="hdr-right">
+    <div class="cnt-pill" id="p-hr" style="display:none">HR: <b id="c-hr">0</b></div>
+    <div class="cnt-pill" id="p-cq" style="display:none">CQ: <b id="c-cq">0</b></div>
+    <div class="cnt-pill" id="p-pl" style="display:none">Plate: <b id="c-pl">0</b></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab(this,'upload')">📂 Excel Upload</button>
+  <button class="tab-btn" id="tab-search-btn" onclick="switchTab(this,'search')" style="opacity:0.4;cursor:not-allowed" disabled>🔍 Coil Search</button>
+  <button class="tab-btn" id="tab-book-btn" onclick="switchTab(this,'booking')" style="opacity:0.4;cursor:not-allowed" disabled>📋 Booking (<span id="bk-cnt">0</span>)</button>
+</div>
+
+<div class="main">
+
+  <!-- UPLOAD TAB -->
+  <div class="sec active" id="tab-upload">
+    <div class="card">
+      <div class="ctitle">📂 Apni Excel File Upload Karo</div>
+      <div id="upload-ui">
+        <div class="upload-zone" id="dropzone"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="onDrop(event)">
+          <input type="file" accept=".xlsx,.xls" onchange="onFileSelect(this)">
+          <span class="u-icon">📊</span>
+          <h3>Excel File Yahan Drop Karo</h3>
+          <p>Ya neeche button se select karo</p>
+          <p style="margin-top:8px;font-size:0.78rem;color:#aaa">Supported: .xlsx, .xls &nbsp;|&nbsp; Sheets: HR, CQ, plate</p>
+          <div class="upload-btn">📁 File Choose Karo</div>
+        </div>
+        <div style="margin-top:14px;padding:14px;background:#fff8e1;border-radius:10px;border:1px solid #ffe082;">
+          <b style="color:#e65100">📌 Note:</b> <span style="color:#555;font-size:0.85rem">
+          Aapki file mein <b>HR, CQ, plate</b> naam ki sheets honi chahiye. Coil No., Thick In Mm, Width In Mm, LENGTH, CUTTING SIZE, BALANCE, A, A1, B, B2, C, C2, D, D2 columns hone chahiye.</span>
+        </div>
+      </div>
+      <div id="file-loaded-ui" style="display:none"></div>
+      <div id="parse-loading" style="display:none">
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>Excel file parse ho rahi hai...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH TAB -->
+  <div class="sec" id="tab-search">
+    <div class="card">
+      <div class="ctitle">🗂️ Sheet Select Karo</div>
+      <div class="stabs" id="sheet-tabs-area"></div>
+      <div class="ctitle">🔍 Coil Number Search</div>
+      <div class="srow">
+        <div class="swrap">
+          <span class="sicon">🔍</span>
+          <input class="sinput" id="ci" type="text" placeholder="Coil Number type karo..."
+            autocomplete="off" oninput="onSrch()" onkeydown="onKD(event)"/>
+          <div class="sugg" id="sg" style="display:none"></div>
+        </div>
+        <button class="clrbtn" onclick="clrAll()">✖ Clear</button>
+      </div>
+    </div>
+    <div id="ra"></div>
+  </div>
+
+  <!-- BOOKING TAB -->
+  <div class="sec" id="tab-booking">
+    <div class="card">
+      <div class="ctitle">📋 Booked Coils</div>
+      <div id="bka"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let D = {};           // parsed data: {sheetName: [records]}
+let sheetNames = [];  // actual sheet names found
+let curSheet = '';
+let selIdx = -1, fsugs = [];
+let bookings = JSON.parse(localStorage.getItem('cb26') || '[]');
+updBkCnt();
+
+// ─── FILE HANDLING ───────────────────────────────────────────
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if(f) parseFile(f);
+}
+function onFileSelect(inp){
+  if(inp.files[0]) parseFile(inp.files[0]);
+}
+
+function parseFile(file){
+  if(!file.name.match(/\.xlsx?$/i)){showToast('❌ Sirf .xlsx ya .xls file!',true);return;}
+  document.getElementById('upload-ui').style.display='none';
+  document.getElementById('parse-loading').style.display='block';
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array',cellDates:true});
+      D = {};
+      sheetNames = [];
+      // Accept any sheet - detect known ones or all
+      const knownMap = {'hr':'HR','cq':'CQ','plate':'plate','plate ':'plate'};
+      wb.SheetNames.forEach(sn=>{
+        const key = knownMap[sn.toLowerCase().trim()] || sn.trim();
+        const ws = wb.Sheets[sn];
+        const rows = XLSX.utils.sheet_to_json(ws,{defval:null});
+        const records = [];
+        rows.forEach(row=>{
+          const coil = strVal(row['Coil No.']);
+          if(!coil) return;
+          const cuts = [];
+          const cs = safeFloat(row['CUTTING SIZE']);
+          const bal = safeInt(row['BALANCE']);
+          if(cs && cs>0) cuts.push({len:cs, pcs:bal||0});
+          [['A','A1'],['B','B2'],['C','C2'],['D','D2']].forEach(([lc,pc])=>{
+            const lv=safeFloat(row[lc]), pv=safeInt(row[pc]);
+            if(lv&&lv>0) cuts.push({len:lv, pcs:pv||0});
+          });
+          records.push({
+            coil, cuts,
+            thick: safeFloat(row['Thick In Mm']),
+            width: safeFloat(row['Width In Mm']),
+            length: safeFloat(row['LENGTH']),
+            grade: strVal(row['GRADE']),
+            make: strVal(row['Make']),
+            spec: strVal(row['Specification']),
+            qty: safeFloat(row['Qty. In M.T.']),
+            bal_wt: safeFloat(row['Balance Weight']),
+            shape: strVal(row['SHAPE']),
+            remarks: strVal(row['REMARKS']),
+            company: strVal(row['COMPANY NAME']),
+            from_recv: strVal(row['FROM RECEIVED']),
+            yard_coil: strVal(row['YARD COIL NO.']),
+            cutter: strVal(row['Name Of The Cutter']),
+            rate: safeFloat(row['Rate']),
+            date: strVal(row['DATE']),
+            sno: safeInt(row['S.NO']),
+            total_cut_wt: safeFloat(row['total cutting weight']),
+            act_bal: strVal(row['actul balance coil shape']),
+            blok: strVal(row['BLOK']),
+            invoice: strVal(row['INVOICE NO']),
+            challan: strVal(row['Challan']),
+            ageing: safeInt(row['AGEING Days']),
+            c_perc: safeFloat(row['C%']),
+            ys: safeFloat(row['YS']),
+            uts: safeFloat(row['UTS']),
+          });
+        });
+        if(records.length>0){
+          D[key] = D[key] ? D[key].concat(records) : records;
+          if(!sheetNames.includes(key)) sheetNames.push(key);
+        }
+      });
+      if(!sheetNames.length){
+        document.getElementById('parse-loading').style.display='none';
+        document.getElementById('upload-ui').style.display='block';
+        showToast('❌ Koi valid sheet/data nahi mili!',true); return;
+      }
+      onParsed(file.name);
+    } catch(err){
+      document.getElementById('parse-loading').style.display='none';
+      document.getElementById('upload-ui').style.display='block';
+      showToast('❌ File parse nahi hui: '+err.message, true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function onParsed(fname){
+  document.getElementById('parse-loading').style.display='none';
+  // Show loaded state
+  const totalCoils = Object.values(D).reduce((a,v)=>a+v.length,0);
+  const sheetInfo = sheetNames.map(s=>`${s}: ${D[s].length}`).join(' | ');
+  document.getElementById('file-loaded-ui').style.display='block';
+  document.getElementById('file-loaded-ui').innerHTML = `
+    <div class="file-loaded">
+      <div class="fi-icon">✅</div>
+      <div class="fi-info">
+        <h4>${fname}</h4>
+        <p>${sheetInfo} &nbsp;|&nbsp; Total: <b>${totalCoils}</b> coils loaded</p>
+      </div>
+      <button class="change-btn" onclick="changeFile()">🔄 File Badlo</button>
+    </div>`;
+
+  // Update count pills
+  sheetNames.forEach(s=>{
+    const pill = document.getElementById('p-'+s.toLowerCase());
+    const cnt = document.getElementById('c-'+s.toLowerCase());
+    if(pill&&cnt){pill.style.display='';cnt.textContent=D[s].length;}
+  });
+  // Show all counts in header
+  ['hr','cq','pl','plate'].forEach(k=>{
+    const p=document.getElementById('p-'+k); if(p)p.style.display='';
+    const c=document.getElementById('c-'+k);
+    if(c) c.textContent = (D[k]||D[k.toUpperCase()]||[]).length;
+  });
+
+  // Enable tabs
+  const sb = document.getElementById('tab-search-btn');
+  const bb = document.getElementById('tab-book-btn');
+  sb.disabled=false; sb.style.opacity='1'; sb.style.cursor='pointer';
+  bb.disabled=false; bb.style.opacity='1'; bb.style.cursor='pointer';
+
+  // Build sheet tabs in search
+  buildSheetTabs();
+  curSheet = sheetNames[0];
+  switchTab(document.getElementById('tab-search-btn'),'search');
+  showToast('✅ File load ho gayi! '+ totalCoils + ' coils ready.');
+}
+
+function changeFile(){
+  document.getElementById('file-loaded-ui').style.display='none';
+  document.getElementById('upload-ui').style.display='block';
+  D={}; sheetNames=[]; curSheet='';
+  document.getElementById('ra').innerHTML='';
+  const sb=document.getElementById('tab-search-btn');
+  const bb=document.getElementById('tab-book-btn');
+  sb.disabled=true;sb.style.opacity='0.4';sb.style.cursor='not-allowed';
+  bb.disabled=true;bb.style.opacity='0.4';bb.style.cursor='not-allowed';
+  switchTab(document.querySelector('.tab-btn'),'upload');
+}
+
+function buildSheetTabs(){
+  const area = document.getElementById('sheet-tabs-area');
+  area.innerHTML = sheetNames.map((s,i)=>
+    `<button class="sbtn ${i===0?'active':''}" onclick="selSheet(this,'${s}')">${s} (${D[s].length})</button>`
+  ).join('');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function safeFloat(v){
+  try{const f=parseFloat(v);return isNaN(f)?null:Math.round(f*100)/100;}catch{return null;}
+}
+function safeInt(v){
+  try{const f=parseFloat(v);return isNaN(f)?null:Math.round(f);}catch{return null;}
+}
+function strVal(v){
+  if(v==null||v===''||v==='nan'||v==='null') return '';
+  if(v instanceof Date) return v.toLocaleDateString('en-IN');
+  return String(v).trim().replace(/^(nan|null|undefined)$/i,'');
+}
+function fmt(v,d=2){return v!=null&&v!==''?parseFloat(v).toFixed(d):'—';}
+
+// ─── SEARCH ──────────────────────────────────────────────────
+function selSheet(el,s){
+  curSheet=s;
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  clrAll();
+}
+
+function onSrch(){
+  const q=document.getElementById('ci').value.trim().toLowerCase();
+  const sg=document.getElementById('sg');
+  if(!q){sg.style.display='none';document.getElementById('ra').innerHTML='';return;}
+  const data=D[curSheet]||[];
+  fsugs=data.filter(d=>d.coil.toString().toLowerCase().includes(q)).slice(0,18);
+  selIdx=-1;
+  if(!fsugs.length){
+    sg.innerHTML='<div class="sitem" style="color:#aaa;cursor:default">❌ Koi coil nahi mila</div>';
+  } else {
+    sg.innerHTML=fsugs.map((d,i)=>
+      `<div class="sitem" id="sg${i}" onclick="selCoil(${i})">
+        <span><b>${d.coil}</b> <span style="color:#888;font-size:0.78rem">${d.grade||''} ${d.make||''}</span></span>
+        <span class="sbadge">${d.thick||'?'}mm × ${d.width||'?'}mm</span>
+      </div>`
+    ).join('');
+  }
+  sg.style.display='block';
+}
+
+function onKD(e){
+  if(e.key==='ArrowDown'){selIdx=Math.min(selIdx+1,fsugs.length-1);hlSug();}
+  else if(e.key==='ArrowUp'){selIdx=Math.max(selIdx-1,0);hlSug();}
+  else if(e.key==='Enter'&&selIdx>=0)selCoil(selIdx);
+  else if(e.key==='Escape')document.getElementById('sg').style.display='none';
+}
+function hlSug(){document.querySelectorAll('.sitem').forEach((el,i)=>{el.style.background=i===selIdx?'#e8eaf6':'';}); }
+
+function selCoil(i){
+  const d=fsugs[i];
+  document.getElementById('ci').value=d.coil;
+  document.getElementById('sg').style.display='none';
+  showResult(d);
+}
+
+function showResult(d){
+  const all=D[curSheet]||[];
+  const same=all.filter(x=>x.coil===d.coil);
+  const thks=same.map(x=>x.thick).filter(x=>x!=null);
+  const wds=same.map(x=>x.width).filter(x=>x!=null);
+  const lens=same.map(x=>x.length).filter(x=>x!=null&&x>0);
+  const minT=thks.length?Math.min(...thks).toFixed(2):null, maxT=thks.length?Math.max(...thks).toFixed(2):null;
+  const minW=wds.length?Math.min(...wds).toFixed(2):null, maxW=wds.length?Math.max(...wds).toFixed(2):null;
+  const minL=lens.length?Math.min(...lens).toFixed(2):null, maxL=lens.length?Math.max(...lens).toFixed(2):null;
+
+  let cutsHtml='';
+  if(d.cuts&&d.cuts.length){
+    const totalPcs=d.cuts.reduce((a,c)=>a+(c.pcs||0),0);
+    cutsHtml=`<div style="margin-top:16px">
+      <div class="cuts-title">✂️ Cutting Sizes & PCS
+        <span style="margin-left:auto;font-size:0.78rem;background:#e8eaf6;padding:3px 10px;border-radius:20px;color:var(--primary)">Total PCS: ${totalPcs}</span>
+      </div>
+      <table class="cuts-table">
+        <tr><th>#</th><th>Length (mm)</th><th>PCS</th><th>Detail</th></tr>
+        ${d.cuts.map((c,i)=>`<tr>
+          <td style="color:#999;font-size:0.8rem">${i+1}</td>
+          <td><span class="len-val">${fmt(c.len)}</span></td>
+          <td><span class="pcs-val">${c.pcs}</span></td>
+          <td style="color:#888;font-size:0.8rem">${c.len} mm × ${c.pcs} pc${c.pcs!=1?'s':''}</td>
+        </tr>`).join('')}
+      </table></div>`;
+  } else {
+    cutsHtml=`<div style="margin-top:12px;padding:12px;background:#f8f9ff;border-radius:8px;color:#999;font-size:0.83rem;text-align:center">🔲 Cutting size nahi hai (PACK / BALANCE)</div>`;
+  }
+
+  const extras=[
+    ['Company',d.company],['Cutter',d.cutter],['From Received',d.from_recv],
+    ['Yard Coil No',d.yard_coil],['Invoice No',d.invoice],['Challan',d.challan],
+    ['Rate',d.rate?'₹'+parseFloat(d.rate).toLocaleString('en-IN'):''],
+    ['Date',d.date],['S.No',d.sno],['Ageing Days',d.ageing],
+    ['C%',d.c_perc],['YS',d.ys],['UTS',d.uts],
+    ['Shape',d.shape],['BLOK',d.blok],['Remarks',d.remarks],
+    ['Actual Balance',d.act_bal],['Total Cut Wt (MT)',d.total_cut_wt],
+  ].filter(([,v])=>v!=null&&v!==''&&v!==0&&v!=='0');
+
+  const dStr = JSON.stringify(d).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+
+  document.getElementById('ra').innerHTML=`
+    <div class="rcard">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="r-coil-no">🔩 Coil: ${d.coil}</div>
+      </div>
+      <div class="r-tags">
+        <span class="rtag rtag-sheet">${curSheet}</span>
+        ${d.shape?`<span class="rtag rtag-shape">${d.shape}</span>`:''}
+        ${d.grade?`<span class="rtag rtag-gr">${d.grade}</span>`:''}
+        ${d.make?`<span class="rtag rtag-mk">${d.make}</span>`:''}
+        ${d.spec?`<span class="rtag" style="background:#e3f2fd;color:#1565c0">${d.spec}</span>`:''}
+      </div>
+      <div class="igrid">
+        <div class="ibox" style="border-color:#3949ab">
+          <div class="ilbl">🔩 Thickness (mm)</div>
+          <div class="ival">${fmt(d.thick)}</div>
+          ${minT?`<div class="isub"><span class="rbadge">Min: ${minT}</span><span class="rbadge">Max: ${maxT}</span></div>`:''}
+        </div>
+        <div class="ibox" style="border-color:#ff6f00">
+          <div class="ilbl">📐 Width (mm)</div>
+          <div class="ival">${fmt(d.width)}</div>
+          ${minW?`<div class="isub"><span class="rbadge">Min: ${minW}</span><span class="rbadge">Max: ${maxW}</span></div>`:''}
+        </div>
+        <div class="ibox" style="border-color:#00897b">
+          <div class="ilbl">📏 Length (mm)</div>
+          <div class="ival">${fmt(d.length)}</div>
+          ${minL?`<div class="isub"><span class="rbadge">Min: ${minL}</span><span class="rbadge">Max: ${maxL}</span></div>`:''}
+        </div>
+        <div class="ibox" style="border-color:#7b1fa2">
+          <div class="ilbl">⚖️ Qty (MT)</div>
+          <div class="ival">${fmt(d.qty)}</div>
+        </div>
+        <div class="ibox" style="border-color:#e53935">
+          <div class="ilbl">📦 Balance Wt (MT)</div>
+          <div class="ival">${fmt(d.bal_wt)}</div>
+        </div>
+      </div>
+      ${cutsHtml}
+      <div class="einfo">
+        ${extras.map(([l,v])=>`<div class="erow">📌 ${l}: <span>${v}</span></div>`).join('')}
+      </div>
+      <textarea class="note-area" id="bknote" rows="2" placeholder="📝 Booking note likho (optional)..."></textarea><br>
+      <button class="book-btn" id="bookbtn" onclick="doBook()">📋 Is Coil Ko Book Karo</button>
+    </div>`;
+
+  // Store current coil for booking
+  window._curCoil = d;
+}
+
+// ─── BOOKING ─────────────────────────────────────────────────
+function doBook(){
+  const d = window._curCoil;
+  if(!d){return;}
+  const note=(document.getElementById('bknote')||{value:''}).value.trim();
+  if(bookings.find(b=>b.coil===d.coil&&b.sheet===curSheet)){
+    showToast('⚠️ Yeh coil pehle se book hai!',true);return;
+  }
+  bookings.unshift({
+    id:Date.now(), coil:d.coil, sheet:curSheet,
+    thick:d.thick, width:d.width, length:d.length,
+    grade:d.grade, make:d.make, spec:d.spec,
+    qty:d.qty, bal_wt:d.bal_wt, cuts:d.cuts,
+    note, date:new Date().toLocaleString('en-IN')
+  });
+  localStorage.setItem('cb26',JSON.stringify(bookings));
+  updBkCnt();
+  showToast('✅ Coil book ho gayi!');
+}
+
+function renderBk(){
+  const a=document.getElementById('bka');
+  if(!bookings.length){
+    a.innerHTML='<div class="empty-bk"><span class="e">📭</span>Koi booking nahi hai<br><small>Search karke coil book karo</small></div>';return;
+  }
+  a.innerHTML=bookings.map(b=>{
+    const cuts=(b.cuts||[]).filter(c=>c.len>0);
+    return `<div class="bitem">
+      <div style="flex:1;min-width:200px">
+        <div><span class="bcoil">${b.coil}</span><span class="bsheet">${b.sheet}</span></div>
+        <div class="bdet">🔩 <b>${fmt(b.thick)}</b>mm &nbsp;|&nbsp; 📐 <b>${fmt(b.width)}</b>mm &nbsp;|&nbsp; 📏 <b>${fmt(b.length)}</b>mm &nbsp;|&nbsp; ⚖️ <b>${fmt(b.qty)}</b> MT
+        ${b.grade?'<br>'+b.grade:''}${b.make?' • '+b.make:''}</div>
+        ${cuts.length?`<div class="bcuts">${cuts.map(c=>`<span class="bcut-chip">✂️ ${fmt(c.len)} × ${c.pcs}pcs</span>`).join('')}</div>`:''}
+        ${b.note?`<div class="bnote">📝 ${b.note}</div>`:''}
+        <div class="bdate">🕐 ${b.date}</div>
+      </div>
+      <button class="delbtn" onclick="delBk(${b.id})">🗑 Delete</button>
+    </div>`;
+  }).join('');
+}
+
+function delBk(id){
+  bookings=bookings.filter(b=>b.id!==id);
+  localStorage.setItem('cb26',JSON.stringify(bookings));
+  updBkCnt();renderBk();
+  showToast('🗑 Booking delete ho gayi',true);
+}
+
+function updBkCnt(){document.getElementById('bk-cnt').textContent=bookings.length;}
+
+function switchTab(el,tab){
+  if(el.disabled)return;
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  el.classList.add('active');
+  if(tab==='booking')renderBk();
+}
+
+function clrAll(){
+  document.getElementById('ci').value='';
+  document.getElementById('sg').style.display='none';
+  document.getElementById('ra').innerHTML='';
+  fsugs=[];selIdx=-1;window._curCoil=null;
+}
+
+function showToast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(isErr?' err':'');
+  setTimeout(()=>t.className='toast',3200);
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.swrap'))document.getElementById('sg').style.display='none';
+});
+</script>
+</body>
+</html>
